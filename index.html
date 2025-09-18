@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Agent Call Statistics</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2rem; }
+  label { display: block; margin-top: 0.6rem; }
+  table { border-collapse: collapse; margin-top: 1.5rem; width: 100%; }
+  th, td { border: 1px solid #aaa; padding: 0.5rem; text-align: center; }
+  th { background: #f4f4f4; }
+  .result { margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h2>Agent Call Statistics Calculator</h2>
+
+<form id="agentForm">
+  <label>Agent name: <input type="text" id="agentName" required></label>
+  <label>Pack Out total: <input type="number" id="packOut" step="0.01" required></label>
+  <label>Pack In total: <input type="number" id="packIn" step="0.01" required></label>
+  <label>Total number of calls: <input type="number" id="totalCalls" step="0.01" required></label>
+  <label>Days in month: <input type="number" id="daysInMonth" required></label>
+
+  <fieldset style="margin-top:1rem">
+    <legend>Average talk time per call (agent-reported)</legend>
+    <label>Minutes: <input type="number" id="avgTalkMin" required></label>
+    <label>Seconds: <input type="number" id="avgTalkSec" required></label>
+  </fieldset>
+
+  <fieldset style="margin-top:1rem">
+    <legend>Total talk time for the month</legend>
+    <label>Days: <input type="number" id="talkDays" required></label>
+    <label>Hours: <input type="number" id="talkHours" required></label>
+    <label>Minutes: <input type="number" id="talkMinutes" required></label>
+    <label>Seconds: <input type="number" id="talkSeconds" required></label>
+  </fieldset>
+
+  <button type="button" onclick="calculate()">Calculate</button>
+</form>
+
+<div class="result" id="output"></div>
+
+<script>
+function formatHMS(sec) {
+  const totalHours = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  return `${totalHours}h ${m}m ${s}s`;
+}
+function formatMinSec(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}m ${s}s`;
+}
+
+function calculate() {
+  const name        = document.getElementById('agentName').value.trim();
+  const packOut     = parseFloat(document.getElementById('packOut').value);
+  const packIn      = parseFloat(document.getElementById('packIn').value);
+  const totalCalls  = parseFloat(document.getElementById('totalCalls').value);
+  const daysInMonth = parseInt(document.getElementById('daysInMonth').value);
+
+  const avgTalkMin  = parseInt(document.getElementById('avgTalkMin').value);
+  const avgTalkSec  = parseInt(document.getElementById('avgTalkSec').value);
+
+  const talkDays    = parseInt(document.getElementById('talkDays').value);
+  const talkHours   = parseInt(document.getElementById('talkHours').value);
+  const talkMinutes = parseInt(document.getElementById('talkMinutes').value);
+  const talkSeconds = parseInt(document.getElementById('talkSeconds').value);
+
+  // total talk time in seconds
+  const totalTalkSec =
+      ((talkDays * 24 + talkHours) * 3600) + talkMinutes * 60 + talkSeconds;
+  const inputAvgTalkSec = avgTalkMin * 60 + avgTalkSec;
+
+  const weeksInMonth = daysInMonth / 7.0;
+
+  const weeklyPackOut = packOut / weeksInMonth;
+  const weeklyPackIn  = packIn  / weeksInMonth;
+  const weeklyCalls   = totalCalls / weeksInMonth;
+  const weeklyTalkSec = totalTalkSec / weeksInMonth;
+
+  const dailyPackOut  = packOut / daysInMonth;
+  const dailyPackIn   = packIn  / daysInMonth;
+  const dailyCalls    = totalCalls / daysInMonth;
+  const dailyTalkSec  = totalTalkSec / daysInMonth;
+
+  const calcAvgTalkSec = totalCalls > 0 ? totalTalkSec / totalCalls : 0;
+
+  // Build output HTML
+  document.getElementById('output').innerHTML = `
+    <h3>Agent: ${name}</h3>
+    <table>
+      <tr>
+        <th>Period</th>
+        <th>Pack Out</th>
+        <th>Pack In</th>
+        <th>Total Calls</th>
+        <th>Total Talk Time</th>
+      </tr>
+      <tr>
+        <td>Monthly</td>
+        <td>${packOut.toFixed(2)}</td>
+        <td>${packIn.toFixed(2)}</td>
+        <td>${totalCalls.toFixed(2)}</td>
+        <td>${formatHMS(totalTalkSec)}</td>
+      </tr>
+      <tr>
+        <td>Weekly (avg)</td>
+        <td>${weeklyPackOut.toFixed(2)}</td>
+        <td>${weeklyPackIn.toFixed(2)}</td>
+        <td>${weeklyCalls.toFixed(2)}</td>
+        <td>${formatHMS(weeklyTalkSec)}</td>
+      </tr>
+      <tr>
+        <td>Daily (avg)</td>
+        <td>${dailyPackOut.toFixed(2)}</td>
+        <td>${dailyPackIn.toFixed(2)}</td>
+        <td>${dailyCalls.toFixed(2)}</td>
+        <td>${formatHMS(dailyTalkSec)}</td>
+      </tr>
+    </table>
+    <p><strong>Average talk time per call (input):</strong> ${formatMinSec(inputAvgTalkSec)}</p>
+    <p><strong>Average talk time per call (calculated):</strong> ${formatMinSec(calcAvgTalkSec)}</p>
+  `;
+}
+</script>
+
+</body>
+</html>
